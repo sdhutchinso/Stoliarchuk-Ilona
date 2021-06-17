@@ -1,7 +1,5 @@
 package cn.bvin.lib.module.update;
 
-import android.content.Context;
-
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.VolleyError;
 
@@ -13,11 +11,10 @@ public abstract class CheckListener{
 
 	/**
 	 * 开始检测更新，是一个耗时的网络请求的过程
-	 * @param context 用以获取app本地版本号
 	 * @param url 检测更新的接口地址
 	 * @param param 更新接口需要传的参数
 	 */
-	public abstract void onCheckStart(Context context, String url, RequestParam param);
+	public abstract void onCheckStart(String url, RequestParam param);
 	
 	/**
 	 * 检测更新成功
