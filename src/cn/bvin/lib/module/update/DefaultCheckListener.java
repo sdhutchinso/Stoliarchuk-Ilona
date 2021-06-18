@@ -3,6 +3,7 @@ package cn.bvin.lib.module.update;
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
 import cn.bvin.lib.module.net.RequestParam;
+import cn.bvin.lib.module.utils.VersionUtils;
 /**
  * 基于CheckListener实现app本地version和服务器version比较，
  * 如果服务器版本大于本地app版本就触发onUpdateFound(UpdateInfo updateInfo)
@@ -21,12 +22,21 @@ public abstract class DefaultCheckListener extends CheckListener{
 	 */
 	public abstract void onUpdateNotfoud();
 	
+	/**
+	 * 获取上下文
+	 * @return 这个上下文用来获取版本号
+	 */
+	public abstract Context getContext();
+	
+	
 	private int localVersion;
 	
+	
+	
 	@Override
-	public void onCheckStart(Context context, String url, RequestParam param) {
+	public void onCheckStart(String url, RequestParam param) {
 		try {
-			this.localVersion = getLocalAppVersion(context);
+			this.localVersion = getLocalAppVersion(getContext());
 		} catch (NameNotFoundException e) {
 			onCheckFailure(e);
 		}
@@ -46,6 +56,6 @@ public abstract class DefaultCheckListener extends CheckListener{
 	}
 
 	private int getLocalAppVersion(Context context) throws NameNotFoundException {
-		return context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionCode;
+		return VersionUtils.getApplicationVersion(context);
 	}
 }
