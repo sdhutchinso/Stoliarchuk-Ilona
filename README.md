@@ -8,7 +8,7 @@
 
 cn.bvin.lib.module.update.UpdateInfo:
     更新信息模型，任何接口最好都按照此模型来定制接口数据形式
-    
+    ```
     public String version;// 版本号
 	public String updateDesc;// 更新内容
 	public String apkUrl;// 更新文件地址
