@@ -38,7 +38,7 @@ cn.bvin.lib.module.update.CheckRequest:
 			}
 		}
 		return super.getBody();
-	}
+	}码
     ```
 DefaultCheckRequest是一个默认的接口返回内容转换成UpdateInfo对象的实现如有需要可以自己实现，因为可能不同接口返回数据形式是不一样的。
 
