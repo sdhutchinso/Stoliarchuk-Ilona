@@ -2,6 +2,10 @@ package cn.bvin.lib.module.update;
 
 import java.util.Map;
 
+import com.android.volley.Request.Method;
+import com.android.volley.toolbox.HttpHeaderParser;
+import com.google.gson.Gson;
+
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
@@ -11,14 +15,19 @@ import android.content.DialogInterface.OnClickListener;
 import android.text.TextUtils;
 import cn.bvin.lib.module.net.MapParam;
 import cn.bvin.lib.module.net.RequestParam;
+import cn.bvin.lib.module.net.convert.DataConvertor;
 import cn.bvin.lib.module.net.volley.RequestManager;
+import cn.bvin.lib.module.update.model.UpdateModel;
 import cn.bvin.lib.module.utils.ToastUtils;
+import cn.bvin.library.debug.DebugeHelper;
+import cn.bvin.library.debug.SimpleLogger;
+import cn.bvin.library.utils.StringUtils;
 
 public class UpdateManager {
 
 	private Context context;
 	
-	private CheckMode checkMode;
+	private CheckMode checkMode = CheckMode.ForeGround;
 	
 	private ToastUtils toast;
 	private Dialog dialog;
@@ -47,8 +56,31 @@ public class UpdateManager {
 		
 	}
 	
-	public void checkVersion() {
-		
+	
+	
+	private UpdateManager() {
+	}
+
+	private UpdateManager(Context context) {
+		this.context = context;
+		toast = new ToastUtils(context);
+	}
+
+	/**
+	 * 获取一个UpdateManager对象
+	 * @param context 只有用上下文才能用默认的CheckListener
+	 * @return 返回一个UpdateManager对象
+	 */
+	public static UpdateManager with(Context context) {
+		return new UpdateManager(context);
+	}
+	
+	/**
+	 * 如果完全自定义UI，就不需要Context
+	 * @return 返回一个UpdateManager对象
+	 */
+	public static UpdateManager getInstance() {
+		return new UpdateManager();
 	}
 	
 	/**
@@ -57,11 +89,11 @@ public class UpdateManager {
 	 * @param params 参数
 	 * @param checkListener 检测更新状态监听器
 	 */
-	private void checkVersion(String url,Map<String, Object> params,CheckListener checkListener) {
+	public void checkVersion(String url,Map<String, Object> params,DataConvertor<UpdateInfo> convertor,CheckListener checkListener) {
 		WrapRequest wr = new WrapRequest(url,  new RequestParam(new MapParam(params)));
-		CheckRequest cr = new DefaultCheckRequest(wr, checkListener);
+		CheckRequest cr = new DefaultCheckRequest(Method.POST,wr,convertor, checkListener);
 		//添加请求前触发onCheckStart方法
-		checkListener.onCheckStart(context, url, wr.getParam());
+		checkListener.onCheckStart(url, wr.getParam());
 		RequestManager.addRequest(cr, cr.getUrl());
 	}
 	
@@ -70,22 +102,34 @@ public class UpdateManager {
 	 * @param url 检测更新地址
 	 * @param params 参数
 	 */
-	private void checkVersion(String url,Map<String, Object> params) {
-		checkVersion(url, params, defaultCheckListener);
+	public void checkVersion(String url,Map<String, Object> params) {
+		checkVersion(url, params, new UpdateInfoConvertor(),defaultCheckListener);
+	}
+	
+	/**
+	 * 检测更新，默认监听器，自定义接口数据转换器
+	 * @param url 检测更新地址
+	 * @param params 参数
+	 * @param convertor 接口返回数据格式对应的转换器
+	 */
+	public void checkVersion(String url,Map<String, Object> params,DataConvertor<UpdateInfo> convertor) {
+		checkVersion(url, params, convertor,defaultCheckListener);
 	}
 	
 	private CheckListener defaultCheckListener = new DefaultCheckListener() {
 		
 		
 		@Override
-		public void onCheckStart(Context context, String url, RequestParam param) {
-			super.onCheckStart(context, url, param);
+		public void onCheckStart(String url, RequestParam param) {
+			super.onCheckStart( url, param);
 			if (checkMode==CheckMode.BackGrouud) {
 				toast.show(Config.START_CHECK_TIPS);
 			}else if (checkMode==CheckMode.ForeGround) {
 				showCkeckDialog();
 			}
+			SimpleLogger.log_e("onCheckStart", url+"?"+StringUtils.generateUrlString(param.getMapParams().get()));
 		}
+		
 
 		@Override
 		public void onCheckFailure(Throwable e) {
@@ -97,7 +141,8 @@ public class UpdateManager {
 				}
 				
 			}else if (checkMode==CheckMode.ForeGround) {
-				
+				closeCkeckDialog();
+				SimpleLogger.log_e("onCheckFailure", "没有吗："+e.getLocalizedMessage());
 			}
 		}
 		
@@ -112,11 +157,17 @@ public class UpdateManager {
 		
 		@Override
 		public void onUpdateFound(UpdateInfo updateInfo) {
+			DebugeHelper.ALog().tag_e(updateInfo.updateDesc);
 			if (checkMode==CheckMode.BackGrouud) {
 				//TODO 启动更新确认对话框
 			}else if (checkMode==CheckMode.ForeGround) {
 				closeCkeckDialog();
 			}
+		}
+
+		@Override
+		public Context getContext() {
+			return context;
 		}
 	};
 	
