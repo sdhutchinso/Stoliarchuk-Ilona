@@ -196,6 +196,10 @@ public class UpdateManager {
 	}
 	
 	public interface ConfirmListenerSetter {
+		/**
+		 * 监听用户确认更细操作，适用于没有自己实现CheckListener的场景
+		 * @param listener
+		 */
 		public void listenUpdateConfirm(UpdateConfirmListener listener);
 	}
 	
@@ -210,8 +214,8 @@ public class UpdateManager {
 	
 	/*创建更新确认对话框*/
 	private void buildUpdateConfirmDialog(final UpdateInfo info) {
-		new Builder(context).setTitle(Config.CHECK_DIALOG_TITLE)
-			.setMessage(Config.CONFIRM_UPDATE_DIALOG_MESSAGE)
+		new Builder(context).setTitle(Config.CONFIRM_UPDATE_DIALOG_MESSAGE)
+			.setMessage(info.updateDesc)
 			.setPositiveButton(Config.CONFIRM_UPDATE_DIALOG_POSITIVE, new OnClickListener() {
 				
 				@Override
