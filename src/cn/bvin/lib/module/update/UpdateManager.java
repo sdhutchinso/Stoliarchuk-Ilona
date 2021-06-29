@@ -89,12 +89,19 @@ public class UpdateManager {
 	 * @param params 参数
 	 * @param checkListener 检测更新状态监听器
 	 */
-	public void checkVersion(String url,Map<String, Object> params,DataConvertor<UpdateInfo> convertor,CheckListener checkListener) {
+	public ConfirmListenerSetter checkVersion(String url,Map<String, Object> params,DataConvertor<UpdateInfo> convertor,CheckListener checkListener) {
 		WrapRequest wr = new WrapRequest(url,  new RequestParam(new MapParam(params)));
 		CheckRequest cr = new DefaultCheckRequest(Method.POST,wr,convertor, checkListener);
 		//添加请求前触发onCheckStart方法
 		checkListener.onCheckStart(url, wr.getParam());
 		RequestManager.addRequest(cr, cr.getUrl());
+		return new ConfirmListenerSetter() {
+			
+			@Override
+			public void listenUpdateConfirm(UpdateConfirmListener listner) {
+				mConfirmListener = listner;
+			}
+		};
 	}
 	
 	/**
@@ -102,8 +109,8 @@ public class UpdateManager {
 	 * @param url 检测更新地址
 	 * @param params 参数
 	 */
-	public void checkVersion(String url,Map<String, Object> params) {
-		checkVersion(url, params, new UpdateInfoConvertor(),defaultCheckListener);
+	public ConfirmListenerSetter checkVersion(String url,Map<String, Object> params) {
+		return checkVersion(url, params, new UpdateInfoConvertor(),defaultCheckListener);
 	}
 	
 	/**
@@ -112,8 +119,8 @@ public class UpdateManager {
 	 * @param params 参数
 	 * @param convertor 接口返回数据格式对应的转换器
 	 */
-	public void checkVersion(String url,Map<String, Object> params,DataConvertor<UpdateInfo> convertor) {
-		checkVersion(url, params, convertor,defaultCheckListener);
+	public ConfirmListenerSetter checkVersion(String url,Map<String, Object> params,DataConvertor<UpdateInfo> convertor) {
+		return checkVersion(url, params, convertor,defaultCheckListener);
 	}
 	
 	private CheckListener defaultCheckListener = new DefaultCheckListener() {
@@ -162,6 +169,7 @@ public class UpdateManager {
 				//TODO 启动更新确认对话框
 			}else if (checkMode==CheckMode.ForeGround) {
 				closeCkeckDialog();
+				buildUpdateConfirmDialog(updateInfo);
 			}
 		}
 
@@ -183,15 +191,32 @@ public class UpdateManager {
 		dialog.dismiss();
 	}
 	
+	public interface UpdateConfirmListener {
+		public void onUpdateConfirm(UpdateInfo info);
+	}
+	
+	public interface ConfirmListenerSetter {
+		public void listenUpdateConfirm(UpdateConfirmListener listener);
+	}
+	
+	
+	UpdateConfirmListener mConfirmListener = new UpdateConfirmListener() {
+		
+		@Override
+		public void onUpdateConfirm(UpdateInfo info) {
+			
+		}
+	};
+	
 	/*创建更新确认对话框*/
-	private void buildUpdateConfirmDialog() {
+	private void buildUpdateConfirmDialog(final UpdateInfo info) {
 		new Builder(context).setTitle(Config.CHECK_DIALOG_TITLE)
 			.setMessage(Config.CONFIRM_UPDATE_DIALOG_MESSAGE)
 			.setPositiveButton(Config.CONFIRM_UPDATE_DIALOG_POSITIVE, new OnClickListener() {
 				
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					
+					mConfirmListener.onUpdateConfirm(info);
 				}
 			})
 			.setNegativeButton(Config.CONFIRM_UPDATE_DIALOG_NEGATIVE, new OnClickListener() {
