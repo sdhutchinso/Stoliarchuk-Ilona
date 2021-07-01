@@ -78,3 +78,45 @@ DefaultCheckListener是基于CheckListener实现了版本比较的功能。
 	 */
 	public abstract void onUpdateNotfoud();
     ```
+使用
+--------
+UpdateManager.with(Context)
+.checkVersion(url,Map<String, Object>,DataConvertor<UpdateInfo> convertor)
+.listenUpdateConfirm(UpdateConfirmListener listener);  
+
+UpdateManager.with(Context):通过Context返回一个UpdateManager实例  
+checkVersion(请求地址，map参数，接口数据转换器)
+.listenUpdateConfirm(UpdateConfirmListener listener)监听确认更新  
+
+```
+        Map<String, Object> params = new HashMap<String, Object>();
+		params.put("Method", "UpdateApk");
+		UpdateManager.with(this).checkVersion(url, params,new GsonDataConvertor<UpdateInfo>() {
+			//转换器的作用主要是让监听器得到数据是准确的
+			@Override
+			public UpdateInfo convertFromGson(byte[] data, Class clazz) {
+				String json = new String(data);
+				Gson gson = new Gson();
+				UpdateModel modal = gson.fromJson(json, clazz);
+				UpdateInfo info = new UpdateInfo(modal.version,modal.note,modal.url,modal.lenth);
+				return info;
+			}
+
+			@Override
+			public Class jsonModel() {
+				return UpdateModel.class;
+			}
+		}).listenUpdateConfirm(new UpdateConfirmListener() {
+			
+			@Override
+			public void onUpdateConfirm(UpdateInfo info) {
+				SimpleLogger.log_e("onUpdateConfirm", currentDownloadId<0);
+				if (currentDownloadId>0) {
+					startDownload(info);
+				}else {
+					resureDownload();
+				}
+				showDownloadDialog();
+			}
+		});
+```
