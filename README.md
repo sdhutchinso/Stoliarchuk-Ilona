@@ -1,5 +1,6 @@
 #AppUpdateModule
 包含检查更新功能和下载安装，依赖NetworkModule和UtilsModule两个库。检查更新是使用NetworkModule当中volley去发送请求，而下载是通过DownloadModule去下载服务器新版本。提供一些默认的UI表现形式，也可以完全自己定制，只需要实现相关监听事件即可。
+Demo http://git.oschina.net/bvin/AndroidTest_Update
 说明
 --------
 用到UtilsModule,主要有ToastUtils可能需要弹出先一些状态信息提示，StringUtils从Map集合中生存URL形式的字符串，以及版获取app版本的工具方法
